@@ -1,3 +1,10 @@
+import pytest
+import sys
+
+with pytest.suppress(ImportError):
+    import numpy as np
+
+
 def test_vector_int():
     from pybind11_tests import VectorInt
 
@@ -24,6 +31,48 @@ def test_vector_int():
     assert v_int2 == VectorInt([3, 0, 99, 2, 3])
     del v_int2[0]
     assert v_int2 == VectorInt([0, 99, 2, 3])
+
+
+def test_vector_buffer():
+    from pybind11_tests import VectorUChar, get_undeclstruct
+    b = bytearray([1, 2, 3, 4])
+    v = VectorUChar(b)
+    assert v[1] == 2
+    v[2] = 5
+    m = memoryview(v)  # We expose the buffer interface
+    if sys.version_info.major > 2:
+        assert m[2] == 5
+        m[2] = 6
+    else:
+        assert m[2] == '\x05'
+        m[2] = '\x06'
+    assert v[2] == 6
+
+    v = get_undeclstruct()
+    with pytest.raises(TypeError):
+        memoryview(v)  # Undeclared struct contents, no buffer interface
+
+
+@pytest.requires_numpy
+def test_vector_buffer_numpy():
+    from pybind11_tests import VectorInt, get_vectorstruct
+
+    a = np.array([1, 2, 3, 4], dtype=np.int32)
+    with pytest.raises(TypeError):
+        VectorInt(a)
+
+    a = np.array([1, 2, 3, 4], dtype=np.uintc)
+    v = VectorInt(a)
+    assert v[2] == 3
+    m = np.asarray(v)
+    m[2] = 5
+    assert v[2] == 5
+
+    v = get_vectorstruct()
+    assert v[0].x == 5
+    m = np.asarray(v)
+    m[1]['x'] = 99
+    assert v[1].x == 99
 
 
 def test_vector_custom():
