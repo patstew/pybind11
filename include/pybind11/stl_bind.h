@@ -358,7 +358,7 @@ vector_buffer(Args&&... args) {
             throw pybind11::type_error("Only 1D buffers can be copied to a vector");
         if (info.strides[0] != sizeof(T))
             throw pybind11::type_error("Item size mismatch (Python: " + std::to_string(info.strides[0]) + " C++: " + std::to_string(sizeof(T)) + ")");
-        if (info.format != py::format_descriptor<T>::format())
+        if (!detail::compare_buffer_info<T>::compare(info))
             throw pybind11::type_error("Format mismatch (Python: " + info.format + " C++: " + py::format_descriptor<T>::format() + ")");
         new (&vec) Vector(static_cast<T*>(info.ptr), static_cast<T*>(info.ptr) + info.shape[0]);
     });
