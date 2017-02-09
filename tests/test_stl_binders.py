@@ -33,6 +33,7 @@ def test_vector_int():
     assert v_int2 == VectorInt([0, 99, 2, 3])
 
 
+@pytest.unsupported_on_pypy
 def test_vector_buffer():
     from pybind11_tests import VectorUChar, get_undeclstruct
     b = bytearray([1, 2, 3, 4])
